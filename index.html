@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#05060a" />
+  <title>Don't Forget</title>
+  <meta name="description" content="A talking video journal that opens on today and learns to speak your language." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="app/css/styles.css" />
+</head>
+<body>
+
+  <!-- 1. MIC GATE — the only thing on screen at first. -->
+  <section id="gate" class="gate" aria-live="polite">
+    <div class="gate-inner">
+      <p class="gate-kicker" data-i18n="micKicker"></p>
+      <button id="micBtn" class="mic-btn" type="button">
+        <span class="mic-ring"></span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z"/></svg>
+        <span class="sr-only" data-i18n="micBtn"></span>
+      </button>
+      <p class="gate-body" data-i18n="micBody"></p>
+      <p class="gate-label" data-i18n="micBtn"></p>
+      <div id="gateDenied" class="gate-denied" hidden>
+        <p data-i18n="micDenied"></p>
+        <div class="gate-actions">
+          <button id="micRetry" class="btn" type="button" data-i18n="micRetry"></button>
+          <button id="micSkip" class="btn ghost" type="button" data-i18n="continueWithout"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. INTRO — the command-center "before the mission" scene. -->
+  <section id="intro" class="intro" hidden>
+    <div class="intro-floor"></div>
+    <div class="intro-beams">
+      <span style="--c:var(--red);--d:0s"></span>
+      <span style="--c:var(--blue);--d:.15s"></span>
+      <span style="--c:var(--yellow);--d:.3s"></span>
+      <span style="--c:var(--green);--d:.45s"></span>
+      <span style="--c:var(--pink);--d:.6s"></span>
+    </div>
+    <div class="intro-boot" id="introBoot"></div>
+    <div class="orb" id="introOrb" aria-hidden="true">
+      <div class="orb-ring r1"></div>
+      <div class="orb-ring r2"></div>
+      <div class="orb-ring r3"></div>
+      <div class="orb-core"></div>
+    </div>
+    <p class="intro-sub" id="introSub" aria-live="polite"></p>
+    <button id="introSkip" class="intro-skip" type="button" data-i18n="skip"></button>
+    <div class="intro-flash"></div>
+  </section>
+
+  <!-- 3. HUB — the journal itself. -->
+  <div id="hub" class="hub" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">DF</span>
+        <span class="brand-name">DON'T FORGET</span>
+      </div>
+      <div class="dayline">
+        <span id="dayKicker" class="day-kicker"></span>
+        <h1 id="dayTitle" class="day-title"></h1>
+        <button id="backToday" class="chip" type="button" hidden data-i18n="backToToday"></button>
+      </div>
+      <div class="top-actions">
+        <span class="chip streak" title=""><span class="flame">▲</span><b id="streakNum">0</b> <span data-i18n="streak"></span></span>
+        <button id="rewindBtn" class="chip" type="button"><span class="play">▶</span> <span data-i18n="rewind"></span></button>
+        <label class="chip select">
+          <span class="sr-only" data-i18n="language"></span>
+          <select id="langSelect"></select>
+        </label>
+        <button id="voiceBtn" class="chip icon" type="button" aria-pressed="true" title="Voice">🔊</button>
+      </div>
+    </header>
+
+    <nav class="stories" id="stories" aria-label="Recent days"></nav>
+
+    <div class="layout">
+      <!-- LEFT: calendar + personal patterns -->
+      <aside class="col col-left">
+        <section class="card" id="calendarCard" data-spot="calendar">
+          <div class="cal-head">
+            <button class="icon-btn" id="calPrev" type="button" aria-label="Previous month">‹</button>
+            <h2 id="calTitle"></h2>
+            <button class="icon-btn" id="calNext" type="button" aria-label="Next month">›</button>
+          </div>
+          <div class="cal-grid" id="calendar"></div>
+        </section>
+
+        <section class="card" id="patternsCard">
+          <h3 class="card-title" data-i18n="patterns"></h3>
+          <div class="stats">
+            <div><b id="statDays">0</b><span data-i18n="daysLogged"></span></div>
+            <div><b id="statEntries">0</b><span data-i18n="entries"></span></div>
+          </div>
+          <h4 class="mini-title" data-i18n="mood"></h4>
+          <div class="mood-bars" id="moodBars"></div>
+          <h4 class="mini-title" data-i18n="topWords"></h4>
+          <div class="word-cloud" id="wordCloud"></div>
+        </section>
+      </aside>
+
+      <!-- CENTER: camera, transcript, free write, the day's feed -->
+      <main class="col col-center">
+        <section class="card studio" id="studio" data-spot="studio">
+          <div class="stage">
+            <video id="preview" playsinline muted autoplay></video>
+            <button id="camOn" class="cam-on" type="button"><span>◉</span> <span data-i18n="cameraOff"></span></button>
+            <div class="stage-hud">
+              <span class="live-badge" id="liveBadge" hidden><i></i><span data-i18n="live"></span></span>
+              <span class="timer" id="timer" hidden>00:00</span>
+              <span class="level"><i id="levelBar"></i></span>
+            </div>
+          </div>
+          <div class="studio-controls">
+            <label class="btn ghost upload">
+              <input id="uploadInput" type="file" accept="video/*" hidden />
+              ⤒ <span data-i18n="upload"></span>
+            </label>
+            <button id="recordBtn" class="rec-btn" type="button" aria-label="Record">
+              <span class="rec-dot"></span>
+            </button>
+            <span class="rec-label" id="recLabel" data-i18n="record"></span>
+          </div>
+          <div class="transcript" id="transcriptBox" data-spot="transcript">
+            <div class="transcript-head"><span class="dot"></span><span data-i18n="transcript"></span></div>
+            <p id="liveTranscript" class="transcript-body"></p>
+          </div>
+        </section>
+
+        <section class="card composer" id="composer" data-spot="composer">
+          <div class="avatar" id="meAvatar">?</div>
+          <form id="composeForm">
+            <textarea id="composeText" rows="3"></textarea>
+            <div class="composer-foot">
+              <span class="hint" id="composeHint"></span>
+              <button class="btn primary" type="submit" data-i18n="post"></button>
+            </div>
+          </form>
+        </section>
+
+        <section class="feed" id="feed" aria-live="polite"></section>
+      </main>
+
+      <!-- RIGHT: the assistant (Twitch-chat style) -->
+      <aside class="col col-right">
+        <section class="card assistant" id="assistant" data-spot="assistant">
+          <div class="assistant-head">
+            <div class="mini-orb" id="miniOrb"><i></i></div>
+            <h3 data-i18n="assistant"></h3>
+            <button id="aiToggle" class="toggle" type="button" role="switch" aria-checked="true" data-spot="aiToggle">
+              <span class="knob"></span>
+              <span class="toggle-on" data-i18n="aiOn"></span>
+              <span class="toggle-off" data-i18n="aiOff"></span>
+            </button>
+          </div>
+          <p class="ai-off-note" id="aiOffNote" data-i18n="aiOffNote" hidden></p>
+          <div class="chat-log" id="chat"></div>
+          <form class="chat-form" id="chatForm">
+            <input id="chatInput" autocomplete="off" />
+            <button id="talkBtn" class="talk-btn" type="button" title="">🎙</button>
+            <button class="send-btn" type="submit" aria-label="Send">➤</button>
+          </form>
+        </section>
+      </aside>
+    </div>
+
+    <nav class="tabbar" aria-label="Sections">
+      <a href="#studio">◉</a>
+      <a href="#calendarCard">▦</a>
+      <a href="#composer">✎</a>
+      <a href="#assistant">✦</a>
+    </nav>
+  </div>
+
+  <!-- REWIND — full-screen vertical reels of every video you've recorded. -->
+  <div id="reels" class="reels" hidden>
+    <button id="reelsClose" class="reels-close" type="button" data-i18n="close"></button>
+    <div class="reels-track" id="reelsTrack"></div>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script type="module" src="app/js/app.js"></script>
+</body>
+</html>
